@@ -7,7 +7,8 @@ from typing import (
 import numpy as np
 import time
 import math
-
+import os
+import _thread
 
 def draw_text(img: np.ndarray, text: str, position: Tuple[int, int], color: Tuple[int, int, int]):
     fps_kwargs: Dict[str, Any] = dict(
@@ -22,10 +23,14 @@ def draw_text(img: np.ndarray, text: str, position: Tuple[int, int], color: Tupl
     cv2.putText(**fps_kwargs)
 
 
+def write_file(t,x,y):
+    print(f"{t},{x},{y}",  file=open('file.csv','a'))
+
 def main() -> None:
     cap: cv2.VideoCapture = cv2.VideoCapture(0)
     tracker: cv2.Tracker = cv2.TrackerCSRT_create()
     start = False
+    print('t,x,y',  file=open('file.csv', 'w'))
 
     xs: np.ndarray = np.array([])
     ys: np.ndarray = np.array([])
@@ -55,10 +60,14 @@ def main() -> None:
                 xs = np.append(xs, [middle_point_x])
                 ys = np.append(ys, [middle_point_y])
 
-                if len(t) > 100:
+                if len(t) > 50:
+                    print('t,x,y',  file=open('file.csv', 'w'))
                     t = t[-50:]
                     xs = t[-50:]
                     ys = ys[-50:]
+                    for i in range(len(t)):
+                        write_file(t[i], xs[i], ys[i])
+                    
 
                 if len(ys) > 1:
                     delta_t = (t[-1] - t[-2])
@@ -76,10 +85,11 @@ def main() -> None:
                         color=(0, 255, 0),
                         thickness=2,
                     )
+                    write_file(timestep, middle_point_x, middle_point_y)
                     draw_text(img, text=f"Speed: {speed} cm/s", position=(70, img.shape[0] - 50), color=(0, 0, 255))
             else:
-                draw_text(img, "Lost", position=(75, 80), color=(255, 0, 0))
-
+                draw_text(img, "Lost, press 'r'' to track", position=(75, 80), color=(255, 0, 0))
+        
         draw_text(img, f"Time: {int(timestep)} s", position=(70, img.shape[0] - 70), color=(0, 0, 255))
         actual_time = cv2.getTickCount()
         prev_frame_timestep = timer
@@ -87,9 +97,11 @@ def main() -> None:
         fps = cv2.getTickFrequency() / (actual_time - prev_frame_timestep)
         draw_text(img, text=f"FPS: {int(fps)}", position=(75, 50), color=(255, 0, 0))
         cv2.imshow("Tracking", img)
-        if cv2.waitKey(1) & 0xff == ord('q'):
+        
+        k = cv2.waitKey(1)
+        if k & 0xff == ord('q'):
             break
-        if cv2.waitKey(1) & 0xff == ord("r"):
+        if k & 0xff == ord("r"):
             print(f"Pressed r")
             bbox = cv2.selectROI(
                 windowName="Tracking",
@@ -104,6 +116,10 @@ def main() -> None:
             )
             start = True
 
+def plot():
+    os.system("python plot.py")
 
 if __name__ == '__main__':
+    # Start the thread for the plot function
+    _thread.start_new_thread(plot,())
     main()
