@@ -8,7 +8,7 @@
 
 * [Slides](https://docs.google.com/presentation/d/1wG7UW0YfqwxbBFxzndalBt8y633HSS6zmbSI7D2AJH8/edit#slide=id.gea90e36b42_0_19)
 
-* [Analysis process](./analisis.ipynb)
+* [Data analysis process](./analisis.ipynb)
 
 # Software requirements
 
